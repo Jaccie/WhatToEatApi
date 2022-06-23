@@ -4,6 +4,9 @@ import os
 from dotenv import load_dotenv, find_dotenv
 from mangum import Mangum
 import mysql.connector
+from fastapi.responses import FileResponse
+
+import googlemaps
 
 app = FastAPI()
 
@@ -24,17 +27,57 @@ maxdb = mysql.connector.connect(
     database="foods",
 )
 
+GOOGLE_PLACES_API_KEY = "AIzaSyC5jO39cyFb2vMOvm-TWFvmT393Eu5b0P4"
+
 cursor = maxdb.cursor()
 
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
 
+def get_reference(x):
+    return x["photo_reference"]
+
 @app.get("/random")
 async def get_random():
     cursor.execute("SELECT * FROM place ORDER BY RAND() LIMIT 1;")
     result = cursor.fetchone()
-    return {"place_id": result[0]}
+    gmaps = googlemaps.Client(key=GOOGLE_PLACES_API_KEY)
+    geocode_result = gmaps.place(place_id=result[0], language="zh-TW")
+
+    result_dict = geocode_result["result"]
+    return {
+            "photo_references": list(map(get_reference, result_dict["photos"])),
+            "address": result_dict["formatted_address"] if "formatted_address" in result_dict else "",
+            "phone": result_dict["formatted_phone_number"] if "formatted_phone_number" in result_dict else "",
+            "name": result_dict["name"] if "name" in result_dict else "",
+            "price_level": result_dict["price_level"] if "price_level" in result_dict else "",
+            "rating": result_dict["rating"] if "rating" in result_dict else "",
+            "website": result_dict["website"] if "website" in result_dict else ""
+            }
+
+@app.get("/random/place_photo/{reference}")
+def get_place_photo(reference: str):
+
+    tmp_dir = os.path.join(os.path.dirname(__file__), "tmp") 
+    filelist = [ f for f in os.listdir(tmp_dir) ]
+    for f in filelist:
+        os.remove(os.path.join(tmp_dir, f))
+
+    gmaps = googlemaps.Client(key=GOOGLE_PLACES_API_KEY)
+    geocode_result = gmaps.places_photo(
+        photo_reference=reference,
+        max_width=200)
+        
+    file_name = str(reference) + ".png"
+    full_path = os.path.join(tmp_dir, file_name)
+    temp = open(full_path, "wb")
+    for chunk in geocode_result:
+        if chunk:
+            temp.write(chunk)
+    temp.close()
+    return FileResponse(full_path)
+
 
 @app.get("/users")
 async def get_users():
