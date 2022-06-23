@@ -62,9 +62,9 @@ jobs:
         with: 
           version: 1
         env:
-          AWS_ACCESS_KEY_ID: ${{ secret.AWS_SECRET_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secret.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secret.AWS_DEFAULT_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_SECRET_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
       - name: Download Lambda api.zip
         uses: actions/download-artifact@v2
@@ -74,13 +74,13 @@ jobs:
       - name: Upload to S3 bucket
         run: aws s3 cp api.zip s3://serverless-python-fastapi/api.zip
         env: 
-          AWS_ACCESS_KEY_ID: ${{ secret.AWS_SECRET_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secret.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secret.AWS_DEFAULT_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_SECRET_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
       - name: Deploy new Lambda
         run: aws lambda update-function-code --function-name serverless-python-fastapi --s3-bucket serverless-python-fastapi --s3-key api.zip
         env: 
-          AWS_ACCESS_KEY_ID: ${{ secret.AWS_SECRET_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secret.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secret.AWS_DEFAULT_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_SECRET_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
