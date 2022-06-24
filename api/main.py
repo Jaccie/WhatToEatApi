@@ -57,12 +57,7 @@ async def get_random():
             "website": result_dict["website"] if "website" in result_dict else ""
             }
 
-@app.get("/random/place_photo/{reference}",
-responses = {
-        200: {
-            "content": {"image/png": {}}
-        }
-    })
+@app.get("/random/place_photo/{reference}")
 def get_place_photo(reference: str):
 
     gmaps = googlemaps.Client(key=GOOGLE_PLACES_API_KEY)
@@ -72,7 +67,8 @@ def get_place_photo(reference: str):
 
     img = list(geocode_result)
     bytes_img = b''.join(img)
-    return Response(content=bytes_img, media_type="image/png")
+
+    return base64.b64encode(bytes_img).decode('utf-8')
 
 
 @app.get("/users")
