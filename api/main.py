@@ -1,10 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,Response
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv, find_dotenv
 from mangum import Mangum
 import mysql.connector
 from fastapi.responses import FileResponse
+import base64
 
 import googlemaps
 
@@ -56,27 +57,22 @@ async def get_random():
             "website": result_dict["website"] if "website" in result_dict else ""
             }
 
-@app.get("/random/place_photo/{reference}")
+@app.get("/random/place_photo/{reference}",
+responses = {
+        200: {
+            "content": {"image/png": {}}
+        }
+    })
 def get_place_photo(reference: str):
-
-    tmp_dir = os.path.join(os.path.dirname(__file__), "tmp") 
-    filelist = [ f for f in os.listdir(tmp_dir) ]
-    for f in filelist:
-        os.remove(os.path.join(tmp_dir, f))
 
     gmaps = googlemaps.Client(key=GOOGLE_PLACES_API_KEY)
     geocode_result = gmaps.places_photo(
         photo_reference=reference,
         max_width=200)
-        
-    file_name = str(reference) + ".png"
-    full_path = os.path.join(tmp_dir, file_name)
-    temp = open(full_path, "wb")
-    for chunk in geocode_result:
-        if chunk:
-            temp.write(chunk)
-    temp.close()
-    return FileResponse(full_path)
+
+    img = list(geocode_result)
+    bytes_img = b''.join(img)
+    return Response(content=bytes_img, media_type="image/png")
 
 
 @app.get("/users")
